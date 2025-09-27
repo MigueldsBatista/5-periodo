@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balanceador de Árvore Binária</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 25px;
+            backdrop-filter: blur(5px);
+        }
+
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.balance {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        }
+
+        button.traversal {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+
+        button.search {
+            background: linear-gradient(45deg, #ffd89b, #19547b);
+        }
+
+        input[type="number"], input[type="text"] {
+            padding: 10px;
+            border: none;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            font-weight: bold;
+            text-align: center;
+            width: 80px;
+        }
+
+        input[type="text"] {
+            width: 200px;
+            text-align: left;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"] {
+            width: 100px;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .canvas-container {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow-y: auto;
+        }
+
+        .info-section {
+            margin-bottom: 25px;
+        }
+
+        .info-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .tree-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tree-info div {
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .traversal-result {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            border-left: 4px solid #667eea;
+        }
+
+        .help {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .animation-controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            background: #d4edda;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #155724;
+        }
+
+        .node-highlight {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                order: -1;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .control-group {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌳 Balanceador de Árvore Binária</h1>
+        <div class="controls">
+            <div class="control-group">
+                <input type="number" id="nodeValue" placeholder="Valor" min="1" max="100">
+                <button onclick="addNode()">Adicionar Nó</button>
+                <button onclick="removeNode()">Remover Nó</button>
+                <button onclick="clearTree()">Limpar Árvore</button>
+            </div>
+            
+            <div class="control-group">
+                <input type="text" id="bulkValues" placeholder="Ex: 10,20,30,15,25" style="width: 200px;">
+                <button onclick="bulkInsert()">📦 Inserção em Lote</button>
+            </div>
+            
+            <div class="control-group">
+                <input type="text" id="sentenceInput" placeholder="Digite uma frase aqui..." style="width: 300px;">
+                <button onclick="buildWordTree()">📝 Árvore de Palavras</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="balance" onclick="balanceTree()">⚖️ Balancear Árvore</button>
+                <button onclick="generateRandomTree()">🎲 Árvore Aleatória</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="traversal" onclick="inOrderTraversal()">In-Order</button>
+                <button class="traversal" onclick="preOrderTraversal()">Pre-Order</button>
+                <button class="traversal" onclick="postOrderTraversal()">Post-Order</button>
+                <button class="traversal" onclick="levelOrderTraversal()">Level-Order</button>
+            </div>
+            
+            <div class="control-group">
+                <input type="number" id="searchValue" placeholder="Buscar" min="1" max="100">
+                <button class="search" onclick="searchNode()">🔍 Buscar</button>
+            </div>
+            
+            <div class="control-group">
+                <button onclick="pauseResumeAnimation()">⏸️ Pausar</button>
+                <div class="speed-control">
+                    <span>Velocidade:</span>
+                    <input type="range" id="speedSlider" min="0.5" max="3" step="0.5" value="1" onchange="updateSpeed()">
+                    <span id="speedValue">1x</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="canvas-container">
+            <canvas id="canvas"></canvas>
+        </div>
+        
+        <div class="sidebar">
+            <div class="status" id="status">Pronto para começar!</div>
+            
+            <div class="animation-controls">
+                <button onclick="resetAnimation()">🔄 Resetar</button>
+                <button onclick="stepForward()">⏭️ Próximo Passo</button>
+            </div>
+            
+            <div class="info-section">
+                <h3>📊 Informações da Árvore</h3>
+                <div class="tree-info" id="treeInfo">
+                    <div>Altura: <span id="treeHeight">0</span></div>
+                    <div>Nós: <span id="nodeCount">0</span></div>
+                    <div>Balanceada: <span id="isBalanced">Sim</span></div>
+                    <div>Fator de Balanceamento: <span id="balanceFactor">0</span></div>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <h3>🔍 Resultado dos Percursos</h3>
+                <div class="traversal-result" id="traversalResult">
+                    Nenhum percurso executado ainda.
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <h3>❓ Como Usar</h3>
+                <div class="help">
+                    <strong>Adicionar Nós:</strong> Digite um valor e clique em "Adicionar Nó"<br><br>
+                    <strong>Inserção em Lote:</strong> Digite valores separados por vírgula (ex: 10,20,30,15,25)<br><br>
+                    <strong>Árvore de Palavras:</strong> Digite uma frase e construa uma árvore binária na ordem de aparição das palavras<br><br>
+                    <strong>Arrastar:</strong> Clique e arraste qualquer nó para reposicioná-lo<br><br>
+                    <strong>Balancear:</strong> Clique em "Balancear Árvore" para ver a animação<br><br>
+                    <strong>Percorrer:</strong> Use os botões de percurso para visualizar diferentes ordens<br><br>
+                    <strong>Buscar:</strong> Digite um valor e clique em "Buscar" para destacá-lo<br><br>
+                    <strong>Controles:</strong> Use pausar/retomar e controle de velocidade durante as animações
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TreeNode {
+            constructor(value, x = 0, y = 0) {
+                this.value = value;
+                this.left = null;
+                this.right = null;
+                this.x = x;
+                this.y = y;
+                this.targetX = x;
+                this.targetY = y;
+                this.radius = 25;
+                this.highlighted = false;
+                this.visited = false;
+                this.isWord = typeof value === 'string';
+            }
+
+            // Método para comparar valores (números ou strings)
+            compareWith(otherValue) {
+                if (this.isWord && typeof otherValue === 'string') {
+                    return this.value.localeCompare(otherValue);
+                } else if (!this.isWord && typeof otherValue === 'number') {
+                    return this.value - otherValue;
+                }
+                // Converter para string se tipos diferentes
+                return this.value.toString().localeCompare(otherValue.toString());
+            }
+        }
+
+        class BinaryTreeVisualizer {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.root = null;
+                this.isDragging = false;
+                this.dragNode = null;
+                this.dragOffset = { x: 0, y: 0 };
+                this.animationSpeed = 1;
+                this.isPaused = false;
+                this.animationQueue = [];
+                this.currentAnimation = null;
+                this.animationFrame = null;
+                this.isAnimating = false;
+                
+                this.setupCanvas();
+                this.setupEventListeners();
+                this.animate();
+                
+                // Gerar árvore exemplo
+                this.generateExampleTree();
+            }
+
+            setupCanvas() {
+                const resizeCanvas = () => {
+                    const container = this.canvas.parentElement;
+                    this.canvas.width = container.clientWidth;
+                    this.canvas.height = container.clientHeight;
+                    this.draw();
+                };
+                
+                window.addEventListener('resize', resizeCanvas);
+                resizeCanvas();
+            }
+
+            setupEventListeners() {
+                this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
+                this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
+                this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
+                this.canvas.addEventListener('click', this.onClick.bind(this));
+            }
+
+            generateExampleTree() {
+                const values = [50, 30, 70, 20, 40, 60, 80];
+                values.forEach(value => this.insertNode(value));
+                this.updateTreeInfo();
+            }
+
+            insertNode(value) {
+                if (this.root === null) {
+                    this.root = new TreeNode(value, this.canvas.width / 2, 60);
+                } else {
+                    this.insertNodeRecursive(this.root, value);
+                }
+                this.layoutTree();
+                this.updateTreeInfo();
+            }
+
+            insertNodeRecursive(node, value) {
+                const comparison = node.compareWith(value);
+                
+                if (comparison > 0) {
+                    if (node.left === null) {
+                        node.left = new TreeNode(value);
+                    } else {
+                        this.insertNodeRecursive(node.left, value);
+                    }
+                } else if (comparison < 0) {
+                    if (node.right === null) {
+                        node.right = new TreeNode(value);
+                    } else {
+                        this.insertNodeRecursive(node.right, value);
+                    }
+                }
+                // Se comparison === 0, o valor já existe (não inserir duplicatas)
+            }
+
+            removeNode(value) {
+                this.root = this.removeNodeRecursive(this.root, value);
+                this.layoutTree();
+                this.updateTreeInfo();
+            }
+
+            removeNodeRecursive(node, value) {
+                if (node === null) return null;
+
+                if (value < node.value) {
+                    node.left = this.removeNodeRecursive(node.left, value);
+                } else if (value > node.value) {
+                    node.right = this.removeNodeRecursive(node.right, value);
+                } else {
+                    if (node.left === null) return node.right;
+                    if (node.right === null) return node.left;
+
+                    const minRight = this.findMin(node.right);
+                    node.value = minRight.value;
+                    node.right = this.removeNodeRecursive(node.right, minRight.value);
+                }
+                return node;
+            }
+
+            findMin(node) {
+                while (node.left !== null) {
+                    node = node.left;
+                }
+                return node;
+            }
+
+            layoutTree() {
+                if (this.root === null) return;
+                
+                const height = this.getTreeHeight(this.root);
+                const width = this.canvas.width;
+                
+                this.layoutNodeRecursive(this.root, 0, width, 60, height);
+                this.animateToTargetPositions();
+            }
+
+            layoutNodeRecursive(node, left, right, y, maxHeight) {
+                if (node === null) return;
+                
+                const x = (left + right) / 2;
+                node.targetX = x;
+                node.targetY = y;
+                
+                const levelHeight = (this.canvas.height - 100) / maxHeight;
+                const nextY = y + levelHeight;
+                
+                if (node.left) {
+                    this.layoutNodeRecursive(node.left, left, x, nextY, maxHeight);
+                }
+                if (node.right) {
+                    this.layoutNodeRecursive(node.right, x, right, nextY, maxHeight);
+                }
+            }
+
+            animateToTargetPositions() {
+                this.traverseTree(this.root, (node) => {
+                    this.animateNode(node);
+                });
+            }
+
+            animateNode(node) {
+                const animate = () => {
+                    const dx = node.targetX - node.x;
+                    const dy = node.targetY - node.y;
+                    const speed = 0.1 * this.animationSpeed;
+                    
+                    node.x += dx * speed;
+                    node.y += dy * speed;
+                    
+                    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        node.x = node.targetX;
+                        node.y = node.targetY;
+                    }
+                };
+                animate();
+            }
+
+            async balanceTree() {
+                if (this.root === null) return;
+                
+                this.updateStatus("Iniciando balanceamento da árvore...");
+                this.isAnimating = true;
+                
+                // Passo 1: Coletar valores em ordem
+                this.updateStatus("Coletando valores em ordem...");
+                const values = [];
+                await this.collectValuesAnimated(this.root, values);
+                
+                // Passo 2: Mostrar array ordenado
+                this.updateStatus(`Valores coletados: [${values.join(', ')}]`);
+                await this.delay(1500);
+                
+                // Passo 3: Limpar árvore atual com animação
+                this.updateStatus("Removendo árvore atual...");
+                await this.fadeOutTree();
+                
+                // Passo 4: Construir árvore balanceada passo a passo
+                this.updateStatus("Construindo árvore balanceada...");
+                this.root = null;
+                await this.buildBalancedTreeAnimated(values, 0, values.length - 1, null, true);
+                
+                // Passo 5: Layout final
+                this.layoutTree();
+                
+                this.updateStatus("Árvore balanceada com sucesso!");
+                this.updateTreeInfo();
+                this.isAnimating = false;
+            }
+
+            buildBalancedTree(values, start, end) {
+                if (start > end) return null;
+                
+                const mid = Math.floor((start + end) / 2);
+                const node = new TreeNode(values[mid]);
+                
+                node.left = this.buildBalancedTree(values, start, mid - 1);
+                node.right = this.buildBalancedTree(values, mid + 1, end);
+                
+                return node;
+            }
+
+            async collectValuesAnimated(node, result) {
+                if (node === null) return;
+                
+                await this.collectValuesAnimated(node.left, result);
+                
+                // Destacar nó sendo coletado
+                node.highlighted = true;
+                this.draw();
+                await this.delay(500 / this.animationSpeed);
+                
+                result.push(node.value);
+                node.highlighted = false;
+                node.visited = true;
+                this.draw();
+                
+                await this.collectValuesAnimated(node.right, result);
+            }
+
+            async fadeOutTree() {
+                const nodes = [];
+                this.collectAllNodes(this.root, nodes);
+                
+                for (let opacity = 1; opacity >= 0; opacity -= 0.1) {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.save();
+                    this.ctx.globalAlpha = opacity;
+                    
+                    if (this.root) {
+                        this.drawConnections(this.root);
+                        this.drawNodes(this.root);
+                    }
+                    
+                    this.ctx.restore();
+                    await this.delay(100 / this.animationSpeed);
+                }
+                
+                this.clearHighlights();
+            }
+
+            async buildBalancedTreeAnimated(values, start, end, parent = null, isRoot = false) {
+                if (start > end) return null;
+                
+                const mid = Math.floor((start + end) / 2);
+                const value = values[mid];
+                
+                // Mostrar qual valor será inserido
+                this.updateStatus(`Inserindo nó ${value}...`);
+                
+                let x, y;
+                if (isRoot) {
+                    x = this.canvas.width / 2;
+                    y = 60;
+                } else {
+                    // Posição temporária para animação
+                    x = this.canvas.width / 2;
+                    y = this.canvas.height / 2;
+                }
+                
+                const node = new TreeNode(value, x, y);
+                
+                // Animação de entrada do nó
+                await this.animateNodeEntry(node);
+                
+                if (isRoot) {
+                    this.root = node;
+                } else if (parent) {
+                    // Conectar ao pai apropriado
+                    if (value < parent.value) {
+                        parent.left = node;
+                    } else {
+                        parent.right = node;
+                    }
+                }
+                
+                this.layoutTree();
+                await this.delay(800 / this.animationSpeed);
+                
+                // Recursivamente adicionar filhos
+                node.left = await this.buildBalancedTreeAnimated(values, start, mid - 1, node);
+                node.right = await this.buildBalancedTreeAnimated(values, mid + 1, end, node);
+                
+                return node;
+            }
+
+            async animateNodeEntry(node) {
+                // Começar pequeno e crescer
+                let scale = 0;
+                const targetScale = 1;
+                
+                while (scale < targetScale) {
+                    scale += 0.1;
+                    
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    
+                    // Desenhar árvore existente
+                    if (this.root) {
+                        this.drawConnections(this.root);
+                        this.drawNodes(this.root);
+                    }
+                    
+                    // Desenhar novo nó com escala
+                    this.ctx.save();
+                    this.ctx.translate(node.x, node.y);
+                    this.ctx.scale(scale, scale);
+                    this.ctx.translate(-node.x, -node.y);
+                    
+                    // Desenhar círculo do nó
+                    this.ctx.beginPath();
+                    this.ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
+                    this.ctx.fillStyle = '#ff6b6b';
+                    this.ctx.fill();
+                    this.ctx.strokeStyle = '#fff';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.stroke();
+                    
+                    // Texto do valor
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.font = 'bold 16px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(node.value, node.x, node.y);
+                    
+                    this.ctx.restore();
+                    
+                    await this.delay(50 / this.animationSpeed);
+                }
+            }
+
+            collectAllNodes(node, nodes) {
+                if (node === null) return;
+                nodes.push(node);
+                this.collectAllNodes(node.left, nodes);
+                this.collectAllNodes(node.right, nodes);
+            }
+
+            async bulkInsert(values) {
+                if (!values || values.length === 0) return;
+                
+                this.updateStatus(`Inserindo ${values.length} nós em lote...`);
+                this.isAnimating = true;
+                
+                for (let i = 0; i < values.length; i++) {
+                    const value = values[i];
+                    this.updateStatus(`Inserindo nó ${value} (${i + 1}/${values.length})...`);
+                    
+                    // Inserir o nó
+                    this.insertNode(value);
+                    
+                    // Destacar o nó recém-inserido
+                    const newNode = this.findNode(this.root, value);
+                    if (newNode) {
+                        newNode.highlighted = true;
+                        this.draw();
+                        await this.delay(600 / this.animationSpeed);
+                        newNode.highlighted = false;
+                        newNode.visited = true;
+                        this.draw();
+                        await this.delay(400 / this.animationSpeed);
+                    }
+                }
+                
+                // Limpar destacamentos
+                this.clearHighlights();
+                this.updateStatus(`Inserção em lote concluída! ${values.length} nós adicionados.`);
+                this.updateTreeInfo();
+                this.isAnimating = false;
+            }
+
+            findNode(node, value) {
+                if (node === null) return null;
+                
+                const comparison = node.compareWith(value);
+                if (comparison === 0) return node;
+                
+                if (comparison > 0) {
+                    return this.findNode(node.left, value);
+                } else {
+                    return this.findNode(node.right, value);
+                }
+            }
+
+            async buildWordTree(sentence) {
+                if (!sentence || sentence.trim().length === 0) return;
+                
+                this.updateStatus("Processando frase para árvore de palavras...");
+                this.isAnimating = true;
+                
+                // Limpar árvore atual
+                this.clearTree();
+                
+                // Função para normalizar texto (remover acentos mas manter letras)
+                const normalizeText = (text) => {
+                    return text
+                        .toLowerCase()
+                        .normalize('NFD') // Decompor caracteres acentuados
+                        .replace(/[\u0300-\u036f]/g, '') // Remover apenas os diacríticos (acentos)
+                        .replace(/[^a-z\s]/g, '') // Manter apenas letras e espaços
+                        .trim();
+                };
+                
+                // Processar frase mantendo ordem de aparição
+                const normalizedSentence = normalizeText(sentence);
+                const words = normalizedSentence
+                    .split(/\s+/) // Divide por espaços
+                    .filter(word => word.length > 0); // Remove palavras vazias
+                
+                // Remover duplicatas mantendo primeira ocorrência
+                const uniqueWords = [];
+                const seen = new Set();
+                for (const word of words) {
+                    if (!seen.has(word)) {
+                        uniqueWords.push(word);
+                        seen.add(word);
+                    }
+                }
+                
+                this.updateStatus(`Palavras encontradas na ordem: [${uniqueWords.join(', ')}]`);
+                await this.delay(2000);
+                
+                // Construir árvore inserindo palavras na ordem de aparição
+                this.updateStatus("Construindo árvore na ordem de aparição das palavras...");
+                
+                for (let i = 0; i < uniqueWords.length; i++) {
+                    const word = uniqueWords[i];
+                    this.updateStatus(`Inserindo palavra "${word}" (${i + 1}/${uniqueWords.length})...`);
+                    
+                    // Inserir palavra na árvore
+                    this.insertNode(word);
+                    
+                    // Destacar o nó recém-inserido
+                    const newNode = this.findNode(this.root, word);
+                    if (newNode) {
+                        newNode.highlighted = true;
+                        this.draw();
+                        await this.delay(800 / this.animationSpeed);
+                        newNode.highlighted = false;
+                        newNode.visited = true;
+                        this.draw();
+                        await this.delay(400 / this.animationSpeed);
+                    }
+                }
+                
+                // Limpar destacamentos
+                this.clearHighlights();
+                this.updateStatus(`Árvore de palavras criada com ${uniqueWords.length} palavras na ordem de aparição!`);
+                this.updateTreeInfo();
+                this.isAnimating = false;
+            }
+
+            async buildBalancedWordTree(words, start, end, parent = null, isRoot = false) {
+                if (start > end) return null;
+                
+                const mid = Math.floor((start + end) / 2);
+                const word = words[mid];
+                
+                this.updateStatus(`Inserindo palavra "${word}"...`);
+                
+                let x, y;
+                if (isRoot) {
+                    x = this.canvas.width / 2;
+                    y = 60;
+                } else {
+                    x = this.canvas.width / 2;
+                    y = this.canvas.height / 2;
+                }
+                
+                const node = new TreeNode(word, x, y);
+                
+                // Animação de entrada do nó
+                await this.animateWordNodeEntry(node);
+                
+                if (isRoot) {
+                    this.root = node;
+                } else if (parent) {
+                    if (word.localeCompare(parent.value) < 0) {
+                        parent.left = node;
+                    } else {
+                        parent.right = node;
+                    }
+                }
+                
+                this.layoutTree();
+                await this.delay(800 / this.animationSpeed);
+                
+                // Recursivamente adicionar filhos
+                node.left = await this.buildBalancedWordTree(words, start, mid - 1, node);
+                node.right = await this.buildBalancedWordTree(words, mid + 1, end, node);
+                
+                return node;
+            }
+
+            async animateWordNodeEntry(node) {
+                let scale = 0;
+                const targetScale = 1;
+                
+                while (scale < targetScale) {
+                    scale += 0.1;
+                    
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    
+                    // Desenhar árvore existente
+                    if (this.root) {
+                        this.drawConnections(this.root);
+                        this.drawNodes(this.root);
+                    }
+                    
+                    // Desenhar novo nó com escala
+                    this.ctx.save();
+                    this.ctx.translate(node.x, node.y);
+                    this.ctx.scale(scale, scale);
+                    this.ctx.translate(-node.x, -node.y);
+                    
+                    // Desenhar círculo do nó (palavra)
+                    this.ctx.beginPath();
+                    this.ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
+                    this.ctx.fillStyle = '#2d3436'; // Cor escura para melhor contraste
+                    this.ctx.fill();
+                    this.ctx.strokeStyle = '#fff';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.stroke();
+                    
+                    // Texto da palavra
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.font = 'bold 12px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(node.value, node.x, node.y);
+                    
+                    this.ctx.restore();
+                    
+                    await this.delay(50 / this.animationSpeed);
+                }
+            }
+
+            inOrderTraversalArray(node, result) {
+                if (node === null) return;
+                this.inOrderTraversalArray(node.left, result);
+                result.push(node.value);
+                this.inOrderTraversalArray(node.right, result);
+            }
+
+            async inOrderTraversal() {
+                this.clearHighlights();
+                const result = [];
+                await this.inOrderTraversalAnimated(this.root, result);
+                this.displayTraversalResult("In-Order", result);
+            }
+
+            async preOrderTraversal() {
+                this.clearHighlights();
+                const result = [];
+                await this.preOrderTraversalAnimated(this.root, result);
+                this.displayTraversalResult("Pre-Order", result);
+            }
+
+            async postOrderTraversal() {
+                this.clearHighlights();
+                const result = [];
+                await this.postOrderTraversalAnimated(this.root, result);
+                this.displayTraversalResult("Post-Order", result);
+            }
+
+            async levelOrderTraversal() {
+                this.clearHighlights();
+                const result = [];
+                if (this.root === null) return;
+
+                const queue = [this.root];
+                while (queue.length > 0) {
+                    const node = queue.shift();
+                    await this.highlightNode(node);
+                    result.push(node.value);
+                    
+                    if (node.left) queue.push(node.left);
+                    if (node.right) queue.push(node.right);
+                }
+                
+                this.displayTraversalResult("Level-Order", result);
+            }
+
+            async inOrderTraversalAnimated(node, result) {
+                if (node === null) return;
+                
+                await this.inOrderTraversalAnimated(node.left, result);
+                await this.highlightNode(node);
+                result.push(node.value);
+                await this.inOrderTraversalAnimated(node.right, result);
+            }
+
+            async preOrderTraversalAnimated(node, result) {
+                if (node === null) return;
+                
+                await this.highlightNode(node);
+                result.push(node.value);
+                await this.preOrderTraversalAnimated(node.left, result);
+                await this.preOrderTraversalAnimated(node.right, result);
+            }
+
+            async postOrderTraversalAnimated(node, result) {
+                if (node === null) return;
+                
+                await this.postOrderTraversalAnimated(node.left, result);
+                await this.postOrderTraversalAnimated(node.right, result);
+                await this.highlightNode(node);
+                result.push(node.value);
+            }
+
+            async highlightNode(node) {
+                return new Promise(resolve => {
+                    node.highlighted = true;
+                    this.draw();
+                    
+                    setTimeout(() => {
+                        node.highlighted = false;
+                        node.visited = true;
+                        this.draw();
+                        resolve();
+                    }, 1000 / this.animationSpeed);
+                });
+            }
+
+            displayTraversalResult(type, result) {
+                const resultElement = document.getElementById('traversalResult');
+                resultElement.innerHTML = `
+                    <strong>${type}:</strong><br>
+                    ${result.join(' → ')}<br><br>
+                    <em>Sequência visitada: ${result.length} nós</em>
+                `;
+            }
+
+            searchNode(value) {
+                this.clearHighlights();
+                const found = this.searchNodeRecursive(this.root, value);
+                
+                if (found) {
+                    found.highlighted = true;
+                    this.updateStatus(`Nó ${value} encontrado!`);
+                } else {
+                    this.updateStatus(`Nó ${value} não encontrado.`);
+                }
+                
+                this.draw();
+            }
+
+            searchNodeRecursive(node, value) {
+                if (node === null) return null;
+                if (node.value === value) return node;
+                
+                if (value < node.value) {
+                    return this.searchNodeRecursive(node.left, value);
+                } else {
+                    return this.searchNodeRecursive(node.right, value);
+                }
+            }
+
+            clearTree() {
+                this.root = null;
+                this.updateTreeInfo();
+                this.updateStatus("Árvore limpa.");
+                this.draw();
+            }
+
+            clearHighlights() {
+                this.traverseTree(this.root, (node) => {
+                    node.highlighted = false;
+                    node.visited = false;
+                });
+                this.draw();
+            }
+
+            generateRandomTree() {
+                this.clearTree();
+                const values = [];
+                for (let i = 0; i < 10; i++) {
+                    let value;
+                    do {
+                        value = Math.floor(Math.random() * 100) + 1;
+                    } while (values.includes(value));
+                    values.push(value);
+                    this.insertNode(value);
+                }
+                this.updateStatus("Árvore aleatória gerada!");
+            }
+
+            getTreeHeight(node) {
+                if (node === null) return 0;
+                return 1 + Math.max(this.getTreeHeight(node.left), this.getTreeHeight(node.right));
+            }
+
+            getNodeCount(node) {
+                if (node === null) return 0;
+                return 1 + this.getNodeCount(node.left) + this.getNodeCount(node.right);
+            }
+
+            isBalanced(node) {
+                if (node === null) return true;
+                
+                const leftHeight = this.getTreeHeight(node.left);
+                const rightHeight = this.getTreeHeight(node.right);
+                const balanceFactor = Math.abs(leftHeight - rightHeight);
+                
+                return balanceFactor <= 1 && 
+                       this.isBalanced(node.left) && 
+                       this.isBalanced(node.right);
+            }
+
+            getBalanceFactor(node) {
+                if (node === null) return 0;
+                return this.getTreeHeight(node.left) - this.getTreeHeight(node.right);
+            }
+
+            updateTreeInfo() {
+                const height = this.getTreeHeight(this.root);
+                const nodeCount = this.getNodeCount(this.root);
+                const balanced = this.isBalanced(this.root);
+                const balanceFactor = this.getBalanceFactor(this.root);
+                
+                document.getElementById('treeHeight').textContent = height;
+                document.getElementById('nodeCount').textContent = nodeCount;
+                document.getElementById('isBalanced').textContent = balanced ? 'Sim' : 'Não';
+                document.getElementById('balanceFactor').textContent = balanceFactor;
+            }
+
+            updateStatus(message) {
+                document.getElementById('status').textContent = message;
+            }
+
+            traverseTree(node, callback) {
+                if (node === null) return;
+                callback(node);
+                this.traverseTree(node.left, callback);
+                this.traverseTree(node.right, callback);
+            }
+
+            getNodeAt(x, y) {
+                let foundNode = null;
+                this.traverseTree(this.root, (node) => {
+                    const radius = node.isWord ? Math.max(25, node.value.length * 8) : node.radius;
+                    const distance = Math.sqrt((x - node.x) ** 2 + (y - node.y) ** 2);
+                    if (distance <= radius) {
+                        foundNode = node;
+                    }
+                });
+                return foundNode;
+            }
+
+            onMouseDown(event) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                const node = this.getNodeAt(x, y);
+                if (node) {
+                    this.isDragging = true;
+                    this.dragNode = node;
+                    this.dragOffset = {
+                        x: x - node.x,
+                        y: y - node.y
+                    };
+                    this.canvas.style.cursor = 'grabbing';
+                }
+            }
+
+            onMouseMove(event) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                if (this.isDragging && this.dragNode) {
+                    this.dragNode.x = x - this.dragOffset.x;
+                    this.dragNode.y = y - this.dragOffset.y;
+                    this.dragNode.targetX = this.dragNode.x;
+                    this.dragNode.targetY = this.dragNode.y;
+                    this.draw();
+                } else {
+                    const node = this.getNodeAt(x, y);
+                    this.canvas.style.cursor = node ? 'grab' : 'default';
+                }
+            }
+
+            onMouseUp() {
+                this.isDragging = false;
+                this.dragNode = null;
+                this.canvas.style.cursor = 'default';
+            }
+
+            onClick(event) {
+                if (!this.isDragging) {
+                    // Implementar funcionalidade de clique se necessário
+                }
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                if (this.root) {
+                    this.drawConnections(this.root);
+                    this.drawNodes(this.root);
+                }
+            }
+
+            drawConnections(node) {
+                if (node === null) return;
+                
+                this.ctx.strokeStyle = '#333';
+                this.ctx.lineWidth = 2;
+                
+                if (node.left) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(node.x, node.y);
+                    this.ctx.lineTo(node.left.x, node.left.y);
+                    this.ctx.stroke();
+                    this.drawConnections(node.left);
+                }
+                
+                if (node.right) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(node.x, node.y);
+                    this.ctx.lineTo(node.right.x, node.right.y);
+                    this.ctx.stroke();
+                    this.drawConnections(node.right);
+                }
+            }
+
+            drawNodes(node) {
+                if (node === null) return;
+                
+                // Ajustar raio baseado no conteúdo
+                const isWord = node.isWord;
+                const radius = isWord ? Math.max(25, node.value.length * 8) : node.radius;
+                
+                // Desenhar círculo do nó
+                this.ctx.beginPath();
+                this.ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
+                
+                if (node.highlighted) {
+                    this.ctx.fillStyle = '#ff6b6b';
+                    this.ctx.shadowColor = '#ff6b6b';
+                    this.ctx.shadowBlur = 20;
+                } else if (node.visited) {
+                    this.ctx.fillStyle = '#4ecdc4';
+                } else {
+                    this.ctx.fillStyle = isWord ? '#2d3436' : '#667eea';
+                }
+                
+                this.ctx.fill();
+                this.ctx.shadowBlur = 0;
+                
+                // Borda
+                this.ctx.strokeStyle = '#fff';
+                this.ctx.lineWidth = 3;
+                this.ctx.stroke();
+                
+                // Texto do valor
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = isWord ? 'bold 12px Arial' : 'bold 16px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                
+                // Truncar palavras muito longas
+                let displayText = node.value.toString();
+                if (isWord && displayText.length > 10) {
+                    displayText = displayText.substring(0, 8) + '...';
+                }
+                
+                this.ctx.fillText(displayText, node.x, node.y);
+                
+                // Desenhar filhos
+                this.drawNodes(node.left);
+                this.drawNodes(node.right);
+            }
+
+            animate() {
+                this.draw();
+                this.animationFrame = requestAnimationFrame(this.animate.bind(this));
+            }
+
+            pauseResumeAnimation() {
+                this.isPaused = !this.isPaused;
+                const button = event.target;
+                button.textContent = this.isPaused ? '▶️ Retomar' : '⏸️ Pausar';
+            }
+
+            updateSpeed() {
+                const slider = document.getElementById('speedSlider');
+                this.animationSpeed = parseFloat(slider.value);
+                document.getElementById('speedValue').textContent = this.animationSpeed + 'x';
+            }
+
+            resetAnimation() {
+                this.clearHighlights();
+                this.layoutTree();
+                this.updateStatus("Animação resetada.");
+            }
+
+            stepForward() {
+                // Implementar passo a passo se necessário
+                this.updateStatus("Função de passo a passo não implementada ainda.");
+            }
+
+            delay(ms) {
+                return new Promise(resolve => {
+                    if (this.isPaused) {
+                        const checkPause = () => {
+                            if (this.isPaused) {
+                                setTimeout(checkPause, 100);
+                            } else {
+                                setTimeout(resolve, ms);
+                            }
+                        };
+                        checkPause();
+                    } else {
+                        setTimeout(resolve, ms);
+                    }
+                });
+            }
+        }
+
+        // Inicializar aplicação
+        let visualizer;
+
+        window.addEventListener('load', () => {
+            visualizer = new BinaryTreeVisualizer();
+        });
+
+        // Funções globais chamadas pelos botões
+        function addNode() {
+            if (!visualizer) {
+                alert('Aplicativo ainda não foi carregado completamente. Tente novamente.');
+                return;
+            }
+            
+            const input = document.getElementById('nodeValue');
+            const value = parseInt(input.value);
+            
+            if (isNaN(value) || value < 1 || value > 100) {
+                alert('Por favor, insira um valor entre 1 e 100');
+                return;
+            }
+            
+            if (visualizer.isAnimating) {
+                alert('Aguarde a animação terminar antes de adicionar novos nós');
+                return;
+            }
+            
+            visualizer.insertNode(value);
+            visualizer.updateStatus(`Nó ${value} adicionado!`);
+            input.value = '';
+        }
+
+        function removeNode() {
+            if (!visualizer) {
+                alert('Aplicativo ainda não foi carregado completamente. Tente novamente.');
+                return;
+            }
+            
+            const input = document.getElementById('nodeValue');
+            const value = parseInt(input.value);
+            
+            if (isNaN(value)) {
+                alert('Por favor, insira um valor para remover');
+                return;
+            }
+            
+            if (visualizer.isAnimating) {
+                alert('Aguarde a animação terminar antes de remover nós');
+                return;
+            }
+            
+            visualizer.removeNode(value);
+            visualizer.updateStatus(`Nó ${value} removido!`);
+            input.value = '';
+        }
+
+        function clearTree() {
+            if (!visualizer) {
+                alert('Aplicativo ainda não foi carregado completamente. Tente novamente.');
+                return;
+            }
+            
+            if (visualizer.isAnimating) {
+                alert('Aguarde a animação terminar');
+                return;
+            }
+            visualizer.clearTree();
+        }
+
+        function balanceTree() {
+            if (!visualizer) {
+                alert('Aplicativo ainda não foi carregado completamente. Tente novamente.');
+                return;
+            }
+            
+            if (visualizer.isAnimating) {
+                alert('Animação de balanceamento já em andamento');
+                return;
+            }
+            visualizer.balanceTree();
+        }
+
+        function generateRandomTree() {
+            if (!visualizer) {
+                alert('Aplicativo ainda não foi carregado completamente. Tente novamente.');
+                return;
+            }
+            
+            if (visualizer.isAnimating) {
+                alert('Aguarde a animação terminar');
+                return;
+            }
+            visualizer.generateRandomTree();
+        }
+
+        function buildWordTree() {
+            if (!visualizer) {
+                alert('Aplicativo ainda não foi carregado completamente. Tente novamente.');
+                return;
+            }
+            
+            const input = document.getElementById('sentenceInput');
+            const sentence = input.value.trim();
+            
+            if (!sentence) {
+                alert('Por favor, digite uma frase para criar a árvore de palavras');
+                return;
+            }
+            
+            if (visualizer.isAnimating) {
+                alert('Aguarde a animação terminar antes de criar árvore de palavras');
+                return;
+            }
+            
+            visualizer.buildWordTree(sentence);
+            input.value = '';
+        }
+
+        function bulkInsert() {
+            if (!visualizer) {
+                alert('Aplicativo ainda não foi carregado completamente. Tente novamente.');
+                return;
+            }
+            
+            const input = document.getElementById('bulkValues');
+            const valuesString = input.value.trim();
+            
+            if (!valuesString) {
+                alert('Por favor, insira valores separados por vírgula (ex: 10,20,30,15,25)');
+                return;
+            }
+            
+            if (visualizer.isAnimating) {
+                alert('Aguarde a animação terminar antes de fazer inserção em lote');
+                return;
+            }
+            
+            // Processar e validar os valores
+            const values = valuesString.split(',').map(v => v.trim()).filter(v => v !== '');
+            const validValues = [];
+            const invalidValues = [];
+            
+            for (const valueStr of values) {
+                const value = parseInt(valueStr);
+                if (isNaN(value) || value < 1 || value > 100) {
+                    invalidValues.push(valueStr);
+                } else if (!visualizer.findNode(visualizer.root, value)) {
+                    // Verificar se o valor já existe na árvore
+                    validValues.push(value);
+                }
+            }
+            
+            if (invalidValues.length > 0) {
+                alert(`Valores inválidos encontrados: ${invalidValues.join(', ')}\nApenas valores entre 1 e 100 são aceitos.`);
+                return;
+            }
+            
+            if (validValues.length === 0) {
+                alert('Nenhum valor novo para inserir. Todos os valores já existem na árvore ou são inválidos.');
+                return;
+            }
+            
+            // Confirmar inserção
+            const confirmMsg = `Inserir ${validValues.length} nós: [${validValues.join(', ')}]?`;
+            if (confirm(confirmMsg)) {
+                visualizer.bulkInsert(validValues);
+                input.value = '';
+            }
+        }
+
+        function inOrderTraversal() {
+            visualizer.inOrderTraversal();
+        }
+
+        function preOrderTraversal() {
+            visualizer.preOrderTraversal();
+        }
+
+        function postOrderTraversal() {
+            visualizer.postOrderTraversal();
+        }
+
+        function levelOrderTraversal() {
+            visualizer.levelOrderTraversal();
+        }
+
+        function searchNode() {
+            const input = document.getElementById('searchValue');
+            const value = parseInt(input.value);
+            
+            if (isNaN(value)) {
+                alert('Por favor, insira um valor para buscar');
+                return;
+            }
+            
+            visualizer.searchNode(value);
+            input.value = '';
+        }
+
+        function pauseResumeAnimation() {
+            visualizer.pauseResumeAnimation();
+        }
+
+        function updateSpeed() {
+            visualizer.updateSpeed();
+        }
+
+        function resetAnimation() {
+            visualizer.resetAnimation();
+        }
+
+        function stepForward() {
+            visualizer.stepForward();
+        }   
+
+        // Atalhos de teclado
+        document.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case 'Enter':
+                    if (document.activeElement.id === 'nodeValue') {
+                        addNode();
+                    } else if (document.activeElement.id === 'searchValue') {
+                        searchNode();
+                    } else if (document.activeElement.id === 'bulkValues') {
+                        bulkInsert();
+                    } else if (document.activeElement.id === 'sentenceInput') {
+                        buildWordTree();
+                    }
+                    break;
+                case ' ':
+                    event.preventDefault();
+                    pauseResumeAnimation();
+                    break;
+                case 'b':
+                    balanceTree();
+                    break;
+                case 'c':
+                    clearTree();
+                    break;
+                case 'r':
+                    generateRandomTree();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
