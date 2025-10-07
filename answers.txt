@@ -1,0 +1,33 @@
+QUESTÃO 02 - (2.0 pontos) 
+Uma  empresa  que  aluga  espaços  de  coworking  contratou  você  para  desenvolver  um 
+sistema para gerenciar os aluguéis. A empresa dispõe de vários espaços de diferentes tipos (mesa 
+compartilhada, mesa privada e sala de reunião) que podem ser alugados por um dia, um mês ou 
+um  ano.  Uma  informação  importante  acerca  das  salas  de  reunião  é  a  sua  capacidade.  Escreva 
+uma especificação BDD com cenários relativos à história “Como Cliente, gostaria de alugar um 
+espaço”.
+
+tipo mesa -> compartilhada, privada, sala de reunião
+tempo -> um dia, um mês, um ano
+capacidade -> apenas para sala de reunião
+
+Como Cliente, gostaria de alugar um 
+espaço
+
+Cenário Positivo
+
+Scenario: Sala de reunião disponível
+Given: Sala de reunião com capacidade para 4 pessoas disponível do dia 07/10/2025 até o dia 08/10/2025
+
+When: Cliente solicita aluguel da sala de reunião para 4 pessoas do dia 07/10/2025 até o dia 08/10/2025
+
+Then: Sistema informa que a solicitação de aluguel da sala de reunião para 4 pessoas do dia 07/10/2025 até o dia 08/10/2025
+foi realizada com sucesso
+
+Cenário Negativo
+Scenario: Nenhuma Sala de reunião disponível
+Given: Todas as sala de reunião com capacidade para 4 pessoas disponível do dia 07/10/2025 até o dia 08/10/2025
+
+When: Cliente solicita aluguel da sala de reunião para 4 pessoas do dia 07/10/2025 até o dia 08/10/2025
+
+Then: Sistema informa que a solicitação de aluguel da sala de reunião para 4 pessoas do dia 07/10/2025 até o dia 08/10/2025
+não foi realizada com sucesso, pois não existem salas de reunião disponíveis

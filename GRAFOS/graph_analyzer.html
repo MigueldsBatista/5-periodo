@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisador de Grafos - Caminhos Eulerianos e Hamiltonianos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button.active {
+            background-color: #2E7D32;
+        }
+        
+        button.secondary {
+            background-color: #2196F3;
+        }
+        
+        button.secondary:hover {
+            background-color: #0b7dda;
+        }
+        
+        button.danger {
+            background-color: #f44336;
+        }
+        
+        button.danger:hover {
+            background-color: #d32f2f;
+        }
+        
+        .canvas-container {
+            position: relative;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            background-color: #fff;
+            cursor: crosshair;
+        }
+        
+        .results {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .results h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .result-item {
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        
+        .path-display {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .path-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .result-item h3 {
+            margin-top: 0;
+            color: #444;
+            font-size: 18px;
+        }
+        
+        .result-item p {
+            margin: 5px 0;
+            color: #666;
+        }
+        
+        .result-value {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .result-positive {
+            color: #4CAF50;
+        }
+        
+        .result-negative {
+            color: #f44336;
+        }
+        
+        .vertex {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: move;
+            user-select: none;
+            z-index: 10;
+        }
+        
+        .edge {
+            position: absolute;
+            background-color: #333;
+            height: 2px;
+            transform-origin: left center;
+            z-index: 5;
+        }
+        
+        .instructions {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .highlight {
+            border: 2px solid #FFC107 !important;
+        }
+        
+        .matrix-display {
+            overflow-x: auto;
+            margin-top: 15px;
+            font-family: monospace;
+        }
+        
+        table {
+            border-collapse: collapse;
+        }
+        
+        table td, table th {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        .status-bar {
+            background-color: #333;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Analisador de Grafos - Caminhos Eulerianos e Hamiltonianos</h1>
+        </div>
+        
+        <div class="controls">
+            <div class="button-group">
+                <button id="btnAddVertex" class="active">Adicionar Vértice</button>
+                <button id="btnAddEdge">Adicionar Aresta</button>
+                <button id="btnMoveVertex">Mover Vértices</button>
+                <button id="btnDelete">Excluir Elemento</button>
+            </div>
+            <div class="button-group">
+                <button id="btnClear" class="danger">Limpar Grafo</button>
+                <button id="btnAnalyze" class="secondary">Analisar Grafo</button>
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="graphCanvas" width="1200" height="600"></canvas>
+        </div>
+        
+        <div id="status" class="status-bar">Modo: Adicionar Vértice. Clique na tela para adicionar um vértice.</div>
+        
+        <div class="results">
+            <h2>Resultados da Análise</h2>
+            
+            <div class="result-grid">
+                <div class="result-item">
+                    <h3>Caminho Euleriano</h3>
+                    <p>Um caminho euleriano percorre todas as arestas do grafo uma única vez.</p>
+                    <p>Resultado: <span id="resultEulerPath" class="result-value">Não analisado</span></p>
+                    <button id="btnShowEulerPath" class="secondary" style="display:none">Visualizar Caminho</button>
+                </div>
+                
+                <div class="result-item">
+                    <h3>Ciclo Euleriano</h3>
+                    <p>Um ciclo euleriano percorre todas as arestas uma única vez, começando e terminando no mesmo vértice.</p>
+                    <p>Resultado: <span id="resultEulerCycle" class="result-value">Não analisado</span></p>
+                    <button id="btnShowEulerCycle" class="secondary" style="display:none">Visualizar Ciclo</button>
+                </div>
+                
+                <div class="result-item">
+                    <h3>Caminho Hamiltoniano</h3>
+                    <p>Um caminho hamiltoniano visita todos os vértices do grafo uma única vez.</p>
+                    <p>Resultado: <span id="resultHamiltonPath" class="result-value">Não analisado</span></p>
+                    <button id="btnShowHamiltonPath" class="secondary" style="display:none">Visualizar Caminho</button>
+                </div>
+                
+                <div class="result-item">
+                    <h3>Ciclo Hamiltoniano</h3>
+                    <p>Um ciclo hamiltoniano visita todos os vértices uma única vez, começando e terminando no mesmo vértice.</p>
+                    <p>Resultado: <span id="resultHamiltonCycle" class="result-value">Não analisado</span></p>
+                    <button id="btnShowHamiltonCycle" class="secondary" style="display:none">Visualizar Ciclo</button>
+                </div>
+            </div>
+            
+            <div class="path-display" id="pathVisualization" style="display:none">
+                <h3>Visualização do Caminho</h3>
+                <div class="path-buttons">
+                    <button id="btnResetVisualization" class="danger">Voltar ao Grafo Original</button>
+                </div>
+                <p id="pathDescription"></p>
+                <p><small>Os números nas arestas/vértices indicam a ordem do percurso.</small></p>
+            </div>
+            
+            <div class="matrix-display">
+                <h3>Matriz de Adjacência</h3>
+                <div id="adjacencyMatrix"></div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>Instruções:</h3>
+            <ul>
+                <li><strong>Adicionar Vértice</strong>: Clique em qualquer lugar da tela para adicionar um vértice.</li>
+                <li><strong>Adicionar Aresta</strong>: Clique em um vértice e depois em outro para criar uma aresta entre eles.</li>
+                <li><strong>Mover Vértices</strong>: Clique e arraste os vértices para reposicioná-los.</li>
+                <li><strong>Excluir Elemento</strong>: Clique em um vértice ou aresta para removê-lo.</li>
+                <li><strong>Analisar Grafo</strong>: Clique para verificar se o grafo possui caminhos eulerianos e hamiltonianos.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Estado da aplicação
+        const state = {
+            mode: 'addVertex', // 'addVertex', 'addEdge', 'moveVertex', 'delete'
+            vertices: [],
+            edges: [],
+            nextVertexId: 1,
+            selectedVertex: null,
+            draggingVertex: null,
+            isDragging: false,
+            mouseOffset: { x: 0, y: 0 },
+            eulerPath: null,
+            eulerCycle: null,
+            hamiltonPath: null,
+            hamiltonCycle: null,
+            currentVisualization: null // 'eulerPath', 'eulerCycle', 'hamiltonPath', 'hamiltonCycle'
+        };
+
+        // Referências para elementos DOM
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusBar = document.getElementById('status');
+        
+        // Botões
+        const btnAddVertex = document.getElementById('btnAddVertex');
+        const btnAddEdge = document.getElementById('btnAddEdge');
+        const btnMoveVertex = document.getElementById('btnMoveVertex');
+        const btnDelete = document.getElementById('btnDelete');
+        const btnClear = document.getElementById('btnClear');
+        const btnAnalyze = document.getElementById('btnAnalyze');
+        
+        // Botões de visualização de caminhos
+        const btnShowEulerPath = document.getElementById('btnShowEulerPath');
+        const btnShowEulerCycle = document.getElementById('btnShowEulerCycle');
+        const btnShowHamiltonPath = document.getElementById('btnShowHamiltonPath');
+        const btnShowHamiltonCycle = document.getElementById('btnShowHamiltonCycle');
+        const btnResetVisualization = document.getElementById('btnResetVisualization');
+        
+        // Containers de visualização
+        const pathVisualization = document.getElementById('pathVisualization');
+        const pathDescription = document.getElementById('pathDescription');
+        
+        // Resultados
+        const resultEulerPath = document.getElementById('resultEulerPath');
+        const resultEulerCycle = document.getElementById('resultEulerCycle');
+        const resultHamiltonPath = document.getElementById('resultHamiltonPath');
+        const resultHamiltonCycle = document.getElementById('resultHamiltonCycle');
+        const adjacencyMatrixDisplay = document.getElementById('adjacencyMatrix');
+        
+        // Event listeners dos botões
+        btnAddVertex.addEventListener('click', () => setMode('addVertex'));
+        btnAddEdge.addEventListener('click', () => setMode('addEdge'));
+        btnMoveVertex.addEventListener('click', () => setMode('moveVertex'));
+        btnDelete.addEventListener('click', () => setMode('delete'));
+        btnClear.addEventListener('click', clearGraph);
+        btnAnalyze.addEventListener('click', analyzeGraph);
+        
+        // Event listeners dos botões de visualização
+        btnShowEulerPath.addEventListener('click', () => visualizeEulerPath());
+        btnShowEulerCycle.addEventListener('click', () => visualizeEulerCycle());
+        btnShowHamiltonPath.addEventListener('click', () => visualizeHamiltonPath());
+        btnShowHamiltonCycle.addEventListener('click', () => visualizeHamiltonCycle());
+        btnResetVisualization.addEventListener('click', resetVisualization);
+        
+        // Event listeners do canvas
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
+        canvas.addEventListener('mouseleave', handleMouseUp);
+        
+        // Funções para manipulação do modo
+        function setMode(mode) {
+            state.mode = mode;
+            state.selectedVertex = null;
+            
+            // Atualizar botões ativos
+            [btnAddVertex, btnAddEdge, btnMoveVertex, btnDelete].forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Adicionar classe ativa ao botão selecionado
+            switch(mode) {
+                case 'addVertex':
+                    btnAddVertex.classList.add('active');
+                    statusBar.textContent = 'Modo: Adicionar Vértice. Clique na tela para adicionar um vértice.';
+                    break;
+                case 'addEdge':
+                    btnAddEdge.classList.add('active');
+                    statusBar.textContent = 'Modo: Adicionar Aresta. Clique em um vértice e depois em outro para criar uma aresta.';
+                    break;
+                case 'moveVertex':
+                    btnMoveVertex.classList.add('active');
+                    statusBar.textContent = 'Modo: Mover Vértices. Clique e arraste os vértices para reposicioná-los.';
+                    break;
+                case 'delete':
+                    btnDelete.classList.add('active');
+                    statusBar.textContent = 'Modo: Excluir Elemento. Clique em um vértice ou aresta para removê-lo.';
+                    break;
+            }
+            
+            render();
+        }
+        
+        // Manipulação de eventos do mouse
+        function handleMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            switch(state.mode) {
+                case 'addVertex':
+                    addVertex(x, y);
+                    break;
+                    
+                case 'addEdge':
+                    const clickedVertex = getVertexAtPosition(x, y);
+                    if (clickedVertex) {
+                        if (state.selectedVertex === null) {
+                            state.selectedVertex = clickedVertex;
+                            statusBar.textContent = `Vértice ${clickedVertex.label} selecionado. Clique em outro vértice para conectar.`;
+                        } else {
+                            // Verificar se a aresta já existe
+                            const edgeExists = state.edges.some(edge => 
+                                (edge.source === state.selectedVertex.id && edge.target === clickedVertex.id) ||
+                                (edge.source === clickedVertex.id && edge.target === state.selectedVertex.id)
+                            );
+                            
+                            if (!edgeExists && state.selectedVertex.id !== clickedVertex.id) {
+                                addEdge(state.selectedVertex.id, clickedVertex.id);
+                                statusBar.textContent = `Aresta adicionada entre ${state.selectedVertex.label} e ${clickedVertex.label}.`;
+                            } else if (state.selectedVertex.id === clickedVertex.id) {
+                                statusBar.textContent = `Não é possível conectar um vértice a ele mesmo.`;
+                            } else {
+                                statusBar.textContent = `Aresta entre ${state.selectedVertex.label} e ${clickedVertex.label} já existe.`;
+                            }
+                            state.selectedVertex = null;
+                        }
+                    }
+                    break;
+                    
+                case 'moveVertex':
+                    const vertexToMove = getVertexAtPosition(x, y);
+                    if (vertexToMove) {
+                        state.draggingVertex = vertexToMove;
+                        state.isDragging = true;
+                        state.mouseOffset.x = x - vertexToMove.x;
+                        state.mouseOffset.y = y - vertexToMove.y;
+                        statusBar.textContent = `Movendo vértice ${vertexToMove.label}.`;
+                    }
+                    break;
+                    
+                case 'delete':
+                    // Verificar se clicou em um vértice
+                    const vertexToDelete = getVertexAtPosition(x, y);
+                    if (vertexToDelete) {
+                        deleteVertex(vertexToDelete.id);
+                        statusBar.textContent = `Vértice ${vertexToDelete.label} removido com suas arestas.`;
+                        break;
+                    }
+                    
+                    // Verificar se clicou em uma aresta
+                    const edgeToDelete = getEdgeAtPosition(x, y);
+                    if (edgeToDelete) {
+                        deleteEdge(edgeToDelete);
+                        const sourceVertex = state.vertices.find(v => v.id === edgeToDelete.source);
+                        const targetVertex = state.vertices.find(v => v.id === edgeToDelete.target);
+                        if (sourceVertex && targetVertex) {
+                            statusBar.textContent = `Aresta entre ${sourceVertex.label} e ${targetVertex.label} removida.`;
+                        } else {
+                            statusBar.textContent = `Aresta removida.`;
+                        }
+                    }
+                    break;
+            }
+            
+            render();
+        }
+        
+        function handleMouseMove(e) {
+            if (state.isDragging && state.draggingVertex) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                state.draggingVertex.x = x - state.mouseOffset.x;
+                state.draggingVertex.y = y - state.mouseOffset.y;
+                
+                // Limites do canvas
+                state.draggingVertex.x = Math.max(15, Math.min(canvas.width - 15, state.draggingVertex.x));
+                state.draggingVertex.y = Math.max(15, Math.min(canvas.height - 15, state.draggingVertex.y));
+                
+                render();
+            }
+        }
+        
+        function handleMouseUp() {
+            if (state.isDragging && state.draggingVertex) {
+                statusBar.textContent = `Vértice ${state.draggingVertex.label} movido.`;
+                state.isDragging = false;
+                state.draggingVertex = null;
+            }
+        }
+        
+        // Funções para manipulação do grafo
+        function addVertex(x, y) {
+            // Verificar se já existe um vértice próximo
+            const nearVertex = state.vertices.find(v => 
+                Math.sqrt(Math.pow(v.x - x, 2) + Math.pow(v.y - y, 2)) < 40
+            );
+            
+            if (nearVertex) {
+                statusBar.textContent = `Não é possível adicionar vértice: muito próximo ao vértice ${nearVertex.label}.`;
+                return;
+            }
+            
+            const vertex = {
+                id: state.nextVertexId++,
+                label: state.nextVertexId - 1,
+                x,
+                y
+            };
+            
+            state.vertices.push(vertex);
+            statusBar.textContent = `Vértice ${vertex.label} adicionado.`;
+        }
+        
+        function addEdge(sourceId, targetId) {
+            state.edges.push({
+                source: sourceId,
+                target: targetId
+            });
+        }
+        
+        function deleteVertex(id) {
+            state.vertices = state.vertices.filter(v => v.id !== id);
+            state.edges = state.edges.filter(e => e.source !== id && e.target !== id);
+        }
+        
+        function deleteEdge(edge) {
+            state.edges = state.edges.filter(e => 
+                !(e.source === edge.source && e.target === edge.target) &&
+                !(e.source === edge.target && e.target === edge.source)
+            );
+        }
+        
+        function clearGraph() {
+            state.vertices = [];
+            state.edges = [];
+            state.nextVertexId = 1;
+            state.selectedVertex = null;
+            state.eulerPath = null;
+            state.eulerCycle = null;
+            state.hamiltonPath = null;
+            state.hamiltonCycle = null;
+            state.currentVisualization = null;
+            
+            // Limpar resultados
+            resultEulerPath.textContent = 'Não analisado';
+            resultEulerPath.className = 'result-value';
+            resultEulerCycle.textContent = 'Não analisado';
+            resultEulerCycle.className = 'result-value';
+            resultHamiltonPath.textContent = 'Não analisado';
+            resultHamiltonPath.className = 'result-value';
+            resultHamiltonCycle.textContent = 'Não analisado';
+            resultHamiltonCycle.className = 'result-value';
+            
+            // Esconder botões de visualização
+            btnShowEulerPath.style.display = 'none';
+            btnShowEulerCycle.style.display = 'none';
+            btnShowHamiltonPath.style.display = 'none';
+            btnShowHamiltonCycle.style.display = 'none';
+            
+            // Esconder visualização
+            pathVisualization.style.display = 'none';
+            
+            adjacencyMatrixDisplay.innerHTML = '';
+            
+            statusBar.textContent = 'Grafo limpo. Modo atual: ' + state.mode;
+            
+            render();
+        }
+        
+        function getVertexAtPosition(x, y) {
+            return state.vertices.find(vertex => {
+                const dx = vertex.x - x;
+                const dy = vertex.y - y;
+                return Math.sqrt(dx * dx + dy * dy) <= 15;
+            });
+        }
+        
+        function getEdgeAtPosition(x, y, threshold = 5) {
+            for (const edge of state.edges) {
+                const source = state.vertices.find(v => v.id === edge.source);
+                const target = state.vertices.find(v => v.id === edge.target);
+                
+                if (!source || !target) continue;
+                
+                // Calcular a distância do ponto (x, y) à linha
+                const A = target.y - source.y;
+                const B = source.x - target.x;
+                const C = target.x * source.y - source.x * target.y;
+                
+                const distance = Math.abs(A * x + B * y + C) / Math.sqrt(A * A + B * B);
+                
+                // Verificar se o ponto está próximo à linha
+                if (distance <= threshold) {
+                    // Verificar se o ponto está dentro do segmento de reta
+                    const minX = Math.min(source.x, target.x) - threshold;
+                    const maxX = Math.max(source.x, target.x) + threshold;
+                    const minY = Math.min(source.y, target.y) - threshold;
+                    const maxY = Math.max(source.y, target.y) + threshold;
+                    
+                    if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                        return edge;
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        // Renderização
+        function render() {
+            // Limpar o canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (state.currentVisualization) {
+                renderVisualization();
+            } else {
+                renderNormalGraph();
+            }
+        }
+        
+        function renderNormalGraph() {
+            // Desenhar as arestas
+            for (const edge of state.edges) {
+                const source = state.vertices.find(v => v.id === edge.source);
+                const target = state.vertices.find(v => v.id === edge.target);
+                
+                if (source && target) {
+                    ctx.beginPath();
+                    ctx.moveTo(source.x, source.y);
+                    ctx.lineTo(target.x, target.y);
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+            
+            // Desenhar os vértices
+            for (const vertex of state.vertices) {
+                ctx.beginPath();
+                ctx.arc(vertex.x, vertex.y, 15, 0, 2 * Math.PI);
+                
+                // Destacar o vértice selecionado
+                if (state.selectedVertex && vertex.id === state.selectedVertex.id) {
+                    ctx.fillStyle = '#2E7D32';
+                } else {
+                    ctx.fillStyle = '#4CAF50';
+                }
+                
+                ctx.fill();
+                ctx.stroke();
+                
+                // Rótulo do vértice
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = 'bold 12px Arial';
+                ctx.fillText(vertex.label, vertex.x, vertex.y);
+            }
+        }
+        
+        function renderVisualization() {
+            const path = state[state.currentVisualization];
+            if (!path) return;
+            
+            if (state.currentVisualization.includes('euler')) {
+                renderEulerianVisualization(path);
+            } else if (state.currentVisualization.includes('hamilton')) {
+                renderHamiltonianVisualization(path);
+            }
+        }
+        
+        function renderEulerianVisualization(path) {
+            // Desenhar as arestas não percorridas em cinza
+            for (const edge of state.edges) {
+                const source = state.vertices.find(v => v.id === edge.source);
+                const target = state.vertices.find(v => v.id === edge.target);
+                
+                if (!source || !target) continue;
+                
+                // Verificar se esta aresta está no caminho
+                const isInPath = path.some(step => 
+                    (step.from === edge.source && step.to === edge.target) || 
+                    (step.from === edge.target && step.to === edge.source)
+                );
+                
+                if (!isInPath) {
+                    ctx.beginPath();
+                    ctx.moveTo(source.x, source.y);
+                    ctx.lineTo(target.x, target.y);
+                    ctx.strokeStyle = '#ccc';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+            
+            // Desenhar as arestas do caminho com ordem
+            for (let i = 0; i < path.length; i++) {
+                const step = path[i];
+                const source = state.vertices.find(v => v.id === step.from);
+                const target = state.vertices.find(v => v.id === step.to);
+                
+                if (!source || !target) continue;
+                
+                // Desenhar aresta com gradiente de cor para mostrar direção
+                const gradient = ctx.createLinearGradient(source.x, source.y, target.x, target.y);
+                gradient.addColorStop(0, '#2196F3');
+                gradient.addColorStop(1, '#4CAF50');
+                
+                ctx.beginPath();
+                ctx.moveTo(source.x, source.y);
+                ctx.lineTo(target.x, target.y);
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Numerar a ordem da aresta no meio
+                const midX = (source.x + target.x) / 2;
+                const midY = (source.y + target.y) / 2;
+                
+                // Círculo para o número
+                ctx.beginPath();
+                ctx.arc(midX, midY, 10, 0, 2 * Math.PI);
+                ctx.fillStyle = '#FFC107';
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // Número da ordem
+                ctx.fillStyle = 'black';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText(i + 1, midX, midY);
+            }
+            
+            // Desenhar os vértices
+            for (const vertex of state.vertices) {
+                ctx.beginPath();
+                ctx.arc(vertex.x, vertex.y, 15, 0, 2 * Math.PI);
+                ctx.fillStyle = '#4CAF50';
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // Rótulo do vértice
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = 'bold 12px Arial';
+                ctx.fillText(vertex.label, vertex.x, vertex.y);
+            }
+        }
+        
+        function renderHamiltonianVisualization(path) {
+            // Desenhar as arestas não percorridas em cinza
+            for (const edge of state.edges) {
+                const source = state.vertices.find(v => v.id === edge.source);
+                const target = state.vertices.find(v => v.id === edge.target);
+                
+                if (!source || !target) continue;
+                
+                // Verificar se esta aresta está no caminho
+                let isInPath = false;
+                for (let i = 0; i < path.length - 1; i++) {
+                    if ((path[i] === edge.source && path[i+1] === edge.target) || 
+                        (path[i] === edge.target && path[i+1] === edge.source)) {
+                        isInPath = true;
+                        break;
+                    }
+                }
+                
+                if (!isInPath) {
+                    ctx.beginPath();
+                    ctx.moveTo(source.x, source.y);
+                    ctx.lineTo(target.x, target.y);
+                    ctx.strokeStyle = '#ccc';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+            
+            // Desenhar as arestas do caminho com ordem
+            for (let i = 0; i < path.length - 1; i++) {
+                const sourceId = path[i];
+                const targetId = path[i+1];
+                const source = state.vertices.find(v => v.id === sourceId);
+                const target = state.vertices.find(v => v.id === targetId);
+                
+                if (!source || !target) continue;
+                
+                // Desenhar aresta com gradiente de cor para mostrar direção
+                const gradient = ctx.createLinearGradient(source.x, source.y, target.x, target.y);
+                gradient.addColorStop(0, '#2196F3');
+                gradient.addColorStop(1, '#4CAF50');
+                
+                ctx.beginPath();
+                ctx.moveTo(source.x, source.y);
+                ctx.lineTo(target.x, target.y);
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Numerar a ordem da aresta no meio
+                const midX = (source.x + target.x) / 2;
+                const midY = (source.y + target.y) / 2;
+                
+                // Círculo para o número
+                ctx.beginPath();
+                ctx.arc(midX, midY, 10, 0, 2 * Math.PI);
+                ctx.fillStyle = '#FFC107';
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // Número da ordem
+                ctx.fillStyle = 'black';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText(i + 1, midX, midY);
+            }
+            
+            // Desenhar os vértices com sua ordem no caminho
+            for (const vertex of state.vertices) {
+                const orderInPath = path.indexOf(vertex.id);
+                
+                ctx.beginPath();
+                ctx.arc(vertex.x, vertex.y, 15, 0, 2 * Math.PI);
+                
+                if (orderInPath !== -1) {
+                    ctx.fillStyle = '#4CAF50';
+                } else {
+                    ctx.fillStyle = '#ccc';
+                }
+                
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // Rótulo do vértice
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = 'bold 12px Arial';
+                ctx.fillText(vertex.label, vertex.x, vertex.y);
+                
+                // Adicionar ordem do vértice no caminho
+                if (orderInPath !== -1) {
+                    ctx.beginPath();
+                    ctx.arc(vertex.x + 20, vertex.y - 10, 10, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#FFC107';
+                    ctx.fill();
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = 'black';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.fillText(orderInPath + 1, vertex.x + 20, vertex.y - 10);
+                }
+            }
+        }
+        
+        // Funções para visualização de caminhos
+        function visualizeEulerPath() {
+            if (!state.eulerPath) {
+                statusBar.textContent = 'Caminho euleriano não encontrado para visualizar.';
+                return;
+            }
+            
+            state.currentVisualization = 'eulerPath';
+            pathVisualization.style.display = 'block';
+            pathDescription.textContent = 'Visualização do Caminho Euleriano - Sequência de arestas: ' + formatEulerPath(state.eulerPath);
+            statusBar.textContent = 'Visualizando caminho euleriano.';
+            render();
+        }
+        
+        function visualizeEulerCycle() {
+            if (!state.eulerCycle) {
+                statusBar.textContent = 'Ciclo euleriano não encontrado para visualizar.';
+                return;
+            }
+            
+            state.currentVisualization = 'eulerCycle';
+            pathVisualization.style.display = 'block';
+            pathDescription.textContent = 'Visualização do Ciclo Euleriano - Sequência de arestas: ' + formatEulerPath(state.eulerCycle);
+            statusBar.textContent = 'Visualizando ciclo euleriano.';
+            render();
+        }
+        
+        function visualizeHamiltonPath() {
+            if (!state.hamiltonPath) {
+                statusBar.textContent = 'Caminho hamiltoniano não encontrado para visualizar.';
+                return;
+            }
+            
+            state.currentVisualization = 'hamiltonPath';
+            pathVisualization.style.display = 'block';
+            pathDescription.textContent = 'Visualização do Caminho Hamiltoniano - Sequência de vértices: ' + formatHamiltonPath(state.hamiltonPath);
+            statusBar.textContent = 'Visualizando caminho hamiltoniano.';
+            render();
+        }
+        
+        function visualizeHamiltonCycle() {
+            if (!state.hamiltonCycle) {
+                statusBar.textContent = 'Ciclo hamiltoniano não encontrado para visualizar.';
+                return;
+            }
+            
+            state.currentVisualization = 'hamiltonCycle';
+            pathVisualization.style.display = 'block';
+            pathDescription.textContent = 'Visualização do Ciclo Hamiltoniano - Sequência de vértices: ' + formatHamiltonPath(state.hamiltonCycle);
+            statusBar.textContent = 'Visualizando ciclo hamiltoniano.';
+            render();
+        }
+        
+        function resetVisualization() {
+            state.currentVisualization = null;
+            pathVisualization.style.display = 'none';
+            statusBar.textContent = 'Visualização removida. Modo atual: ' + state.mode;
+            render();
+        }
+        
+        function formatEulerPath(path) {
+            return path.map((step, index) => {
+                const source = state.vertices.find(v => v.id === step.from);
+                const target = state.vertices.find(v => v.id === step.to);
+                return `(${source.label}-${target.label})${index < path.length - 1 ? ' → ' : ''}`;
+            }).join('');
+        }
+        
+        function formatHamiltonPath(path) {
+            return path.map(id => {
+                const vertex = state.vertices.find(v => v.id === id);
+                return vertex.label;
+            }).join(' → ');
+        }
+        
+        // Funções para análise do grafo
+        function analyzeGraph() {
+            if (state.vertices.length === 0) {
+                statusBar.textContent = 'Não há vértices no grafo para analisar.';
+                return;
+            }
+            
+            // Criar matriz de adjacência
+            const adjMatrix = createAdjacencyMatrix();
+            displayAdjacencyMatrix(adjMatrix);
+            
+            // Calcular graus dos vértices
+            const degrees = calculateDegrees();
+            
+            // Verificar caminhos eulerianos
+            const { hasEulerianPath, hasEulerianCycle } = checkEulerian(degrees);
+            
+            // Se existir caminho euleriano, encontrá-lo
+            if (hasEulerianPath) {
+                findEulerianPath();
+            }
+            
+            if (hasEulerianCycle) {
+                findEulerianCycle();
+            }
+            
+            // Verificar caminhos hamiltonianos usando heurísticas
+            const { hasHamiltonianPath, hasHamiltonianCycle } = checkHamiltonian(adjMatrix);
+            
+            // Se existir caminho hamiltoniano, encontrá-lo
+            if (hasHamiltonianPath) {
+                findHamiltonianPath();
+            }
+            
+            if (hasHamiltonianCycle) {
+                findHamiltonianCycle();
+            }
+            
+            // Exibir resultados
+            displayResults(hasEulerianPath, hasEulerianCycle, hasHamiltonianPath, hasHamiltonianCycle);
+            
+            statusBar.textContent = 'Análise do grafo concluída.';
+        }
+        
+        function createAdjacencyMatrix() {
+            const n = state.vertices.length;
+            const matrix = Array(n).fill().map(() => Array(n).fill(0));
+            
+            // Preencher matriz com as arestas
+            for (const edge of state.edges) {
+                const sourceIndex = state.vertices.findIndex(v => v.id === edge.source);
+                const targetIndex = state.vertices.findIndex(v => v.id === edge.target);
+                
+                if (sourceIndex !== -1 && targetIndex !== -1) {
+                    matrix[sourceIndex][targetIndex] = 1;
+                    matrix[targetIndex][sourceIndex] = 1; // Grafo não direcionado
+                }
+            }
+            
+            return matrix;
+        }
+        
+        function displayAdjacencyMatrix(matrix) {
+            let html = '<table>';
+            
+            // Cabeçalho
+            html += '<tr><th></th>';
+            for (const vertex of state.vertices) {
+                html += `<th>${vertex.label}</th>`;
+            }
+            html += '</tr>';
+            
+            // Linhas
+            for (let i = 0; i < matrix.length; i++) {
+                html += `<tr><td>${state.vertices[i].label}</td>`;
+                for (let j = 0; j < matrix[i].length; j++) {
+                    html += `<td>${matrix[i][j]}</td>`;
+                }
+                html += '</tr>';
+            }
+            
+            html += '</table>';
+            adjacencyMatrixDisplay.innerHTML = html;
+        }
+        
+        function calculateDegrees() {
+            const degrees = {};
+            
+            // Inicializar todos os vértices com grau 0
+            for (const vertex of state.vertices) {
+                degrees[vertex.id] = 0;
+            }
+            
+            // Calcular graus com base nas arestas
+            for (const edge of state.edges) {
+                degrees[edge.source]++;
+                degrees[edge.target]++;
+            }
+            
+            return degrees;
+        }
+        
+        function checkEulerian(degrees) {
+            // Verificar se o grafo está conectado
+            if (!isConnected()) {
+                return { hasEulerianPath: false, hasEulerianCycle: false };
+            }
+            
+            // Contar vértices com grau ímpar
+            let oddCount = 0;
+            for (const id in degrees) {
+                if (degrees[id] % 2 !== 0) {
+                    oddCount++;
+                }
+            }
+            
+            // Regras para caminhos e ciclos eulerianos:
+            // - Ciclo Euleriano: todos os vértices têm grau par
+            // - Caminho Euleriano: exatamente 2 vértices têm grau ímpar
+            
+            const hasEulerianCycle = (oddCount === 0);
+            const hasEulerianPath = (oddCount === 0 || oddCount === 2);
+            
+            return { hasEulerianPath, hasEulerianCycle };
+        }
+        
+        function isConnected() {
+            if (state.vertices.length === 0) return true;
+            
+            // BFS para verificar conectividade
+            const visited = {};
+            const queue = [state.vertices[0].id];
+            visited[state.vertices[0].id] = true;
+            
+            while (queue.length > 0) {
+                const current = queue.shift();
+                
+                // Encontrar todos os vértices adjacentes
+                for (const edge of state.edges) {
+                    let neighbor = null;
+                    
+                    if (edge.source === current) {
+                        neighbor = edge.target;
+                    } else if (edge.target === current) {
+                        neighbor = edge.source;
+                    }
+                    
+                    if (neighbor !== null && !visited[neighbor]) {
+                        visited[neighbor] = true;
+                        queue.push(neighbor);
+                    }
+                }
+            }
+            
+            // Verificar se todos os vértices foram visitados
+            return state.vertices.every(v => visited[v.id]);
+        }
+        
+        function checkHamiltonian(adjMatrix) {
+            const n = state.vertices.length;
+            
+            // Condições necessárias para caminhos hamiltonianos
+            
+            // Grafo muito pequeno
+            if (n <= 2) {
+                return {
+                    hasHamiltonianPath: true,
+                    hasHamiltonianCycle: n === 0 || n === 2
+                };
+            }
+            
+            // Verificar conectividade
+            if (!isConnected()) {
+                return {
+                    hasHamiltonianPath: false,
+                    hasHamiltonianCycle: false
+                };
+            }
+            
+            // Verificar condição de Dirac para ciclos hamiltonianos
+            // (cada vértice tem grau >= n/2)
+            let diracCondition = true;
+            for (let i = 0; i < n; i++) {
+                let degree = 0;
+                for (let j = 0; j < n; j++) {
+                    degree += adjMatrix[i][j];
+                }
+                if (degree < n / 2) {
+                    diracCondition = false;
+                    break;
+                }
+            }
+            
+            // Verificar condição de Ore para ciclos hamiltonianos
+            // (para quaisquer dois vértices não adjacentes u e v, grau(u) + grau(v) >= n)
+            let oreCondition = true;
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    if (adjMatrix[i][j] === 0) { // Vértices não adjacentes
+                        let degreeI = 0;
+                        let degreeJ = 0;
+                        
+                        for (let k = 0; k < n; k++) {
+                            degreeI += adjMatrix[i][k];
+                            degreeJ += adjMatrix[j][k];
+                        }
+                        
+                        if (degreeI + degreeJ < n) {
+                            oreCondition = false;
+                            break;
+                        }
+                    }
+                }
+                if (!oreCondition) break;
+            }
+            
+            // Para grafos pequenos, tentar busca exaustiva
+            let hasHamiltonianCycle = false;
+            let hasHamiltonianPath = false;
+            
+            if (n <= 12) { // Limite para busca exaustiva
+                // Busca por ciclo hamiltoniano
+                hasHamiltonianCycle = hasHamiltonianCycleDFS(adjMatrix);
+                
+                // Se não tem ciclo, verifica caminho
+                if (!hasHamiltonianCycle) {
+                    hasHamiltonianPath = hasHamiltonianPathDFS(adjMatrix);
+                } else {
+                    hasHamiltonianPath = true; // Um grafo com ciclo hamiltoniano também tem caminho
+                }
+            } else {
+                // Para grafos maiores, usar heurísticas
+                hasHamiltonianCycle = diracCondition || oreCondition;
+                
+                // Heurística para caminho: se está conectado e tem no máximo 2 vértices de grau 1
+                let degreeOneCount = 0;
+                for (let i = 0; i < n; i++) {
+                    let degree = 0;
+                    for (let j = 0; j < n; j++) {
+                        degree += adjMatrix[i][j];
+                    }
+                    if (degree === 1) {
+                        degreeOneCount++;
+                    }
+                }
+                
+                hasHamiltonianPath = hasHamiltonianCycle || degreeOneCount <= 2;
+            }
+            
+            return { hasHamiltonianPath, hasHamiltonianCycle };
+        }
+        
+        function hasHamiltonianCycleDFS(adjMatrix) {
+            const n = adjMatrix.length;
+            const visited = Array(n).fill(false);
+            
+            // Começar do vértice 0
+            visited[0] = true;
+            
+            // Função recursiva para busca de ciclo hamiltoniano
+            function hamiltonianCycleDFS(pos, count) {
+                // Se todos os vértices estão visitados e há aresta de volta ao inicial
+                if (count === n && adjMatrix[pos][0] === 1) {
+                    return true;
+                }
+                
+                // Tentar visitar todos os vértices
+                for (let v = 0; v < n; v++) {
+                    // Se o vértice v é adjacente ao atual e não foi visitado
+                    if (adjMatrix[pos][v] === 1 && !visited[v]) {
+                        visited[v] = true;
+                        
+                        if (hamiltonianCycleDFS(v, count + 1)) {
+                            return true;
+                        }
+                        
+                        // Backtrack
+                        visited[v] = false;
+                    }
+                }
+                
+                return false;
+            }
+            
+            return hamiltonianCycleDFS(0, 1);
+        }
+        
+        function hasHamiltonianPathDFS(adjMatrix) {
+            const n = adjMatrix.length;
+            
+            // Tentar começando de cada vértice
+            for (let start = 0; start < n; start++) {
+                const visited = Array(n).fill(false);
+                visited[start] = true;
+                
+                if (hamiltonianPathDFS(adjMatrix, start, visited, 1, n)) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        function hamiltonianPathDFS(adjMatrix, pos, visited, count, n) {
+            // Se todos os vértices estão visitados
+            if (count === n) {
+                return true;
+            }
+            
+            // Tentar visitar todos os vértices
+            for (let v = 0; v < n; v++) {
+                // Se o vértice v é adjacente ao atual e não foi visitado
+                if (adjMatrix[pos][v] === 1 && !visited[v]) {
+                    visited[v] = true;
+                    
+                    if (hamiltonianPathDFS(adjMatrix, v, visited, count + 1, n)) {
+                        return true;
+                    }
+                    
+                    // Backtrack
+                    visited[v] = false;
+                }
+            }
+            
+            return false;
+        }
+        
+        // Encontrar caminho euleriano
+        function findEulerianPath() {
+            const degrees = calculateDegrees();
+            const adjList = createAdjacencyList();
+            
+            // Encontrar um vértice de grau ímpar para começar (se existir)
+            let startVertex = state.vertices[0].id;
+            for (const id in degrees) {
+                if (degrees[id] % 2 === 1) {
+                    startVertex = parseInt(id);
+                    break;
+                }
+            }
+            
+            // Copia da lista de adjacência para modificar durante o algoritmo
+            const remainingEdges = {};
+            for (const id in adjList) {
+                remainingEdges[id] = [...adjList[id]];
+            }
+            
+            // Algoritmo de Hierholzer para encontrar caminho euleriano
+            const path = [];
+            let currentVertex = startVertex;
+            
+            function dfs(vertex) {
+                while (remainingEdges[vertex] && remainingEdges[vertex].length > 0) {
+                    const neighbor = remainingEdges[vertex].pop();
+                    
+                    // Remover a aresta oposta também
+                    remainingEdges[neighbor] = remainingEdges[neighbor].filter(v => v !== vertex);
+                    
+                    dfs(neighbor);
+                    
+                    path.push({ from: vertex, to: neighbor });
+                }
+            }
+            
+            dfs(currentVertex);
+            
+            // Inverter o caminho para obter a ordem correta
+            path.reverse();
+            state.eulerPath = path;
+        }
+        
+        // Encontrar ciclo euleriano
+        function findEulerianCycle() {
+            const adjList = createAdjacencyList();
+            
+            // Começar de qualquer vértice para um ciclo euleriano
+            const startVertex = state.vertices[0].id;
+            
+            // Copia da lista de adjacência para modificar durante o algoritmo
+            const remainingEdges = {};
+            for (const id in adjList) {
+                remainingEdges[id] = [...adjList[id]];
+            }
+            
+            // Algoritmo de Hierholzer para encontrar ciclo euleriano
+            const path = [];
+            
+            function dfs(vertex) {
+                while (remainingEdges[vertex] && remainingEdges[vertex].length > 0) {
+                    const neighbor = remainingEdges[vertex].pop();
+                    
+                    // Remover a aresta oposta também
+                    remainingEdges[neighbor] = remainingEdges[neighbor].filter(v => v !== vertex);
+                    
+                    dfs(neighbor);
+                    
+                    path.push({ from: vertex, to: neighbor });
+                }
+            }
+            
+            dfs(startVertex);
+            
+            // Inverter o caminho para obter a ordem correta
+            path.reverse();
+            state.eulerCycle = path;
+        }
+        
+        // Encontrar caminho hamiltoniano
+        function findHamiltonianPath() {
+            const adjMatrix = createAdjacencyMatrix();
+            const n = state.vertices.length;
+            
+            // Armazenar o caminho encontrado
+            let foundPath = null;
+            
+            // Tentar começar de cada vértice
+            for (let startIdx = 0; startIdx < n && !foundPath; startIdx++) {
+                const visited = Array(n).fill(false);
+                const path = [];
+                
+                visited[startIdx] = true;
+                path.push(state.vertices[startIdx].id);
+                
+                if (dfsHamiltonPath(adjMatrix, startIdx, visited, path, 1, n)) {
+                    foundPath = [...path];
+                }
+            }
+            
+            if (foundPath) {
+                state.hamiltonPath = foundPath;
+            }
+        }
+        
+        function dfsHamiltonPath(adjMatrix, current, visited, path, count, n) {
+            // Se todos os vértices foram visitados
+            if (count === n) {
+                return true;
+            }
+            
+            for (let i = 0; i < n; i++) {
+                if (adjMatrix[current][i] === 1 && !visited[i]) {
+                    visited[i] = true;
+                    path.push(state.vertices[i].id);
+                    
+                    if (dfsHamiltonPath(adjMatrix, i, visited, path, count + 1, n)) {
+                        return true;
+                    }
+                    
+                    // Backtrack
+                    visited[i] = false;
+                    path.pop();
+                }
+            }
+            
+            return false;
+        }
+        
+        // Encontrar ciclo hamiltoniano
+        function findHamiltonianCycle() {
+            const adjMatrix = createAdjacencyMatrix();
+            const n = state.vertices.length;
+            
+            // Começar do vértice 0
+            const visited = Array(n).fill(false);
+            const path = [];
+            
+            visited[0] = true;
+            path.push(state.vertices[0].id);
+            
+            if (dfsHamiltonCycle(adjMatrix, 0, visited, path, 1, n)) {
+                // Adicionar o vértice inicial ao final para fechar o ciclo
+                path.push(state.vertices[0].id);
+                state.hamiltonCycle = path;
+            }
+        }
+        
+        function dfsHamiltonCycle(adjMatrix, current, visited, path, count, n) {
+            // Se todos os vértices foram visitados e há aresta de volta ao inicial
+            if (count === n && adjMatrix[current][0] === 1) {
+                return true;
+            }
+            
+            for (let i = 0; i < n; i++) {
+                if (adjMatrix[current][i] === 1 && !visited[i]) {
+                    visited[i] = true;
+                    path.push(state.vertices[i].id);
+                    
+                    if (dfsHamiltonCycle(adjMatrix, i, visited, path, count + 1, n)) {
+                        return true;
+                    }
+                    
+                    // Backtrack
+                    visited[i] = false;
+                    path.pop();
+                }
+            }
+            
+            return false;
+        }
+        
+        // Criar lista de adjacência
+        function createAdjacencyList() {
+            const adjList = {};
+            
+            // Inicializar lista vazia para cada vértice
+            for (const vertex of state.vertices) {
+                adjList[vertex.id] = [];
+            }
+            
+            // Adicionar arestas
+            for (const edge of state.edges) {
+                adjList[edge.source].push(edge.target);
+                adjList[edge.target].push(edge.source);
+            }
+            
+            return adjList;
+        }
+        
+        function displayResults(hasEulerianPath, hasEulerianCycle, hasHamiltonianPath, hasHamiltonianCycle) {
+            // Resultados Eulerianos
+            if (hasEulerianCycle) {
+                resultEulerPath.textContent = 'Sim (Semi-Euleriano e Euleriano)';
+                resultEulerPath.className = 'result-value result-positive';
+                resultEulerCycle.textContent = 'Sim (Euleriano)';
+                resultEulerCycle.className = 'result-value result-positive';
+                btnShowEulerPath.style.display = 'block';
+                btnShowEulerCycle.style.display = 'block';
+            } else if (hasEulerianPath) {
+                resultEulerPath.textContent = 'Sim (Semi-Euleriano)';
+                resultEulerPath.className = 'result-value result-positive';
+                resultEulerCycle.textContent = 'Não';
+                resultEulerCycle.className = 'result-value result-negative';
+                btnShowEulerPath.style.display = 'block';
+                btnShowEulerCycle.style.display = 'none';
+            } else {
+                resultEulerPath.textContent = 'Não';
+                resultEulerPath.className = 'result-value result-negative';
+                resultEulerCycle.textContent = 'Não';
+                resultEulerCycle.className = 'result-value result-negative';
+                btnShowEulerPath.style.display = 'none';
+                btnShowEulerCycle.style.display = 'none';
+            }
+            
+            // Resultados Hamiltonianos
+            if (hasHamiltonianCycle) {
+                resultHamiltonPath.textContent = 'Sim (Semi-Hamiltoniano e Hamiltoniano)';
+                resultHamiltonPath.className = 'result-value result-positive';
+                resultHamiltonCycle.textContent = 'Sim (Hamiltoniano)';
+                resultHamiltonCycle.className = 'result-value result-positive';
+                btnShowHamiltonPath.style.display = 'block';
+                btnShowHamiltonCycle.style.display = 'block';
+            } else if (hasHamiltonianPath) {
+                resultHamiltonPath.textContent = 'Sim (Semi-Hamiltoniano)';
+                resultHamiltonPath.className = 'result-value result-positive';
+                resultHamiltonCycle.textContent = 'Não';
+                resultHamiltonCycle.className = 'result-value result-negative';
+                btnShowHamiltonPath.style.display = 'block';
+                btnShowHamiltonCycle.style.display = 'none';
+            } else {
+                resultHamiltonPath.textContent = 'Não';
+                resultHamiltonPath.className = 'result-value result-negative';
+                resultHamiltonCycle.textContent = 'Não';
+                resultHamiltonCycle.className = 'result-value result-negative';
+                btnShowHamiltonPath.style.display = 'none';
+                btnShowHamiltonCycle.style.display = 'none';
+            }
+            
+            // Esconder a visualização de caminho
+            pathVisualization.style.display = 'none';
+        }
+        
+        // Inicialização
+        setMode('addVertex');
+        render();
+    </script>
+</body>
+</html>

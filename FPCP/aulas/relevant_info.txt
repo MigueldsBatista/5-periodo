@@ -1,0 +1,179 @@
+Processo
+--------
+- Abstração de um programa em execução
+- Associado a um conjunto de recursos do sistema operacional
+- Composto por:
+    - Espaço de endereçamento (memória)
+    - PID (identificador do processo)
+    - Uma ou mais threads
+    - Outros: sockets, arquivos abertos, etc.
+
+Escalonador de Processos (Scheduler)
+------------------------------------
+- Gerencia a execução dos processos
+- Decide qual processo deve ser executado em um dado momento
+
+Memória Virtual
+---------------
+- Memória física = RAM
+- Memória virtual = SWAP (disco rígido ou SSD)
+- Cada processo tem seu próprio espaço de endereçamento virtual
+    - Processos não conhecem seu endereço real
+    - Não sabem se estão na RAM ou no SWAP
+- Tradução feita pelo sistema operacional (SO)
+- Ao acessar um endereço virtual:
+    - SO verifica se o dado está na RAM ou SWAP
+    - Se na RAM: acesso normal
+    - Se no SWAP: SO faz a troca (swap) do dado do SWAP para a RAM e possivelmente troca outro dado da RAM para o SWAP
+    - Essa troca é chamada de page fault
+    - Se o processo acessa um endereço inválido: SO mata o processo (segmentation fault)
+- Sistemas Windows: arquivo de paginação é pagefile.sys
+- Linux: arquivo de paginação é swapfile
+
+Threads
+-------
+- Threads do SO (nativas):
+    - Gerenciadas pelo kernel
+    - Podem rodar em múltiplos núcleos
+    - Maior overhead de criação/gerenciamento
+- Threads da aplicação (green):
+    - Gerenciadas por bibliotecas ou VMs
+    - Mais leves e rápidas de criar
+    - Limitadas a 1 núcleo real executando
+
+Kernel Threads
+--------------
+- Criadas e gerenciadas pelo kernel do SO
+- Cada thread do SO pode ser agendada independentemente
+- Podem rodar em múltiplos núcleos de CPU
+
+Threads: concorrência ou paralelismo?
+-------------------------------------
+- As threads do SO podem ser concorrentes ou paralelas, dependendo do número de núcleos da CPU e do escalonamento do SO
+
+Sistemas Distribuídos
+---------------------
+Segundo Tanenbaum: conjunto de computadores independentes que parecem um sistema único para o usuário.
+
+Características:
+- Múltiplos computadores autônomos
+- Usuários percebem como um sistema unificado
+- Comunicação por troca de mensagens
+
+Centralizado vs Descentralizado vs Distribuído
+----------------------------------------------
+- Soluções centralizadas não escalam bem e são vulneráveis.
+
+Sistemas distribuídos lidam com:
+- Compartilhamento de recursos
+- Falta de relógio global
+- Concorrência e falhas independentes
+
+Desafios em Sistemas Distribuídos
+---------------------------------
+- Heterogeneidade: diferentes sistemas operacionais, redes, linguagens
+- Abertura: interfaces expostas e padronizadas
+- Segurança: confidencialidade, integridade, disponibilidade, autenticidade
+- Escalabilidade: manter desempenho com muitos usuários
+- Falhas: erros parciais e sua detecção/recuperação
+- Concorrência: acesso simultâneo a recursos
+- Transparência: ocultar a complexidade da distribuição (acesso, localização, replicação, falha, etc)
+
+Middleware
+----------
+- Camada de software que facilita o desenvolvimento de sistemas distribuídos
+- Pode envolver adaptadores (wrappers), brokers e interceptadores
+
+Arquiteturas Centralizadas
+--------------------------
+- Cliente-servidor com uma ou mais camadas (1-tier, 2-tier, 3-tier)
+- Exemplo: NFS, onde o cliente acessa um sistema de arquivos remoto
+
+Arquiteturas Alternativas
+-------------------------
+- Distribuição vertical: camadas separadas em servidores diferentes
+- Distribuição horizontal: divisão de carga em partes lógicas equivalentes
+
+P2P
+---
+- Estruturado (ex: Chord, com anel e hash de chaves)
+- Não estruturado (ex: flooding, random walk)
+- Super-peer: peers com mais responsabilidade (índices, brokers)
+
+Exemplo: BitTorrent
+-------------------
+- Arquivo .torrent aponta para um tracker
+- Peers trocam partes (chunks) entre si (swarm)
+
+Cloud Computing
+---------------
+Quatro camadas:
+1. Hardware
+2. Infraestrutura (virtualização)
+3. Plataforma (APIs como Amazon S3)
+4. Aplicação (software final como planilhas e editores)
+
+Edge Computing
+--------------
+- Servidores na borda da rede (mais próximos dos usuários)
+- Argumentos: latência, largura de banda, confiabilidade, segurança
+- Desafios: alocação, posicionamento, orquestração da borda
+
+Blockchain
+----------
+- Cadeia de blocos imutável (append-only)
+- Descentralização: participantes elegem líder para adicionar blocos
+- Problemas: coordenação distribuída, consenso seguro e justo
+
+O que é Middleware?
+-------------------
+Middleware é uma camada de software que se posiciona entre o SO e as aplicações distribuídas, oferecendo serviços prontos para resolver problemas clássicos de heterogeneidade e distribuição.
+
+Definições-Chave:
+-------------------
+Bernstein (1996): “Conjunto de serviços que ajuda a resolver problemas de heterogeneidade e distribuição.”
+Bakken (2001): “Software para gerenciar a complexidade e heterogeneidade dos sistemas distribuídos.”
+
+Por que usar Middleware?
+-------------------
+- Middleware existe para abstrair a complexidade de desenvolver sistemas distribuídos, fornecendo:
+- Comunicação de alto nível (em vez de sockets e protocolos manuais).
+- Interoperabilidade entre linguagens, redes e sistemas operacionais diferentes.
+- Facilidade na programação concorrente, tolerância a falhas e escalabilidade.
+
+| Categoria            | Exemplos                   | Aplicação                         |
+| -------------------- | -------------------------- | --------------------------------- |
+| RPC/RMI              | gRPC, Java RMI             | Chamada remota de procedimentos   |
+| Mensageria (P/S)     | Kafka, Mosquitto, RabbitMQ | Publish/Subscribe, filas          |
+| Orientado a Objetos  | CORBA                      | Integração entre objetos          |
+| Web Services         | REST, SOAP                 | Serviços HTTP com padronização    |
+| Middleware de Evento | DDS, ZeroMQ                | Sistemas reativos e em tempo real |
+
+
+🧙‍♂️ Transparências Oferecidas pelo Middleware
+
+Middleware ajuda a esconder as complexidades do sistema distribuído com os seguintes tipos de transparência:
+
+| Tipo                     | Descrição                                             |
+| ------------------------ | ----------------------------------------------------- |
+| **Migração / Relocação** | Recursos podem ser movidos sem impacto para o cliente |
+| **Acesso**               | Acesso remoto e local ocorrem da mesma forma          |
+| **Localização**          | Cliente não precisa saber onde o serviço está         |
+| **Concorrência**         | Permite múltiplos acessos seguros a um mesmo recurso  |
+| **Replicação**           | Oculta existência de múltiplas cópias de um recurso   |
+| **Falha**                | Oculta falhas de componentes ou redes                 |
+| **Tecnologia**           | Esconde diferenças de linguagem, SO, rede             |
+
+MALCRFT
+
+🧰 Modelos de
+
+O tipo de middleware depende do estilo de comunicação que ele fornece
+
+| Modelo                          | Comunicação                       | Exemplo / Tecnologia       | Características                                     |
+| ------------------------------- | --------------------------------- | -------------------------- | --------------------------------------------------- |
+| **Procedural (RPC)**            | Chamada remota síncrona           | gRPC, Java RMI             | request/reply, client-server clássico               |
+| **Orientado a Objetos**         | Métodos remotos                   | CORBA, EJB                 | Evolução de RPC com interfaces (IDLs)               |
+| **Transacional**                | RPC + Transações                  | Enterprise JavaBeans       | Suporte a controle de transações (two-phase commit) |
+| **Orientado a Mensagem (MOM)**  | Assíncrona / Pub-Sub              | Kafka, RabbitMQ, Mosquitto | Fila de mensagens, desacoplamento, escala N:M       |
+| **Baseado em Espaço de Tuplas** | Compartilhado (take, write, read) | Linda, JavaSpaces          | Memória virtual compartilhada, concorrência natural |
